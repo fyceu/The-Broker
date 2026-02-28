@@ -1,4 +1,4 @@
-# threat hunt report
+# Threat Hunt Report
 
 1. Incident Overview
 2. Threat Hunt

